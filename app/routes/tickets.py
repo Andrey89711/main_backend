@@ -85,6 +85,16 @@ def create_ticket(
     current_user=Depends(get_current_user)
 ):
 
+    if current_user.role in [
+        "admin",
+        "dispatcher"
+    ]:
+
+        raise HTTPException(
+            status_code=403,
+            detail="This role cannot create tickets"
+        )
+
     category = get_or_create_default_category(
         db,
         ticket.category_id

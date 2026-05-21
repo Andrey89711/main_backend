@@ -81,3 +81,15 @@ def require_dispatcher(current_user):
 def require_dispatcher_or_admin(current_user):
 
     return require_dispatcher(current_user)
+
+
+def require_admin(current_user):
+
+    if current_user.role != "admin":
+
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied"
+        )
+
+    return current_user
