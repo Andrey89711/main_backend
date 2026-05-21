@@ -57,34 +57,21 @@ def get_db():
         db.close()
 
 
-def get_or_create_default_category(
+def get_category_or_404(
     db: Session,
     category_id: int
-):
+) -> Category:
 
     category = db.query(Category).filter(
         Category.id == category_id
     ).first()
 
-    if category:
+    if not category:
 
-        return category
-
-    category = db.query(Category).filter(
-        Category.name == "Общие заявки"
-    ).first()
-
-    if category:
-
-        return category
-
-    category = Category(
-        name="Общие заявки"
-    )
-
-    db.add(category)
-
-    db.flush()
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid category"
+        )
 
     return category
 
@@ -199,7 +186,7 @@ def check_similar_tickets(
         payload.address_id
     )
 
-    category = get_or_create_default_category(
+    category = get_category_or_404(
         db,
         payload.category_id
     )
@@ -238,7 +225,7 @@ def create_ticket(
             detail="This role cannot create tickets"
         )
 
-    category = get_or_create_default_category(
+    category = get_category_or_404(
         db,
         ticket.category_id
     )

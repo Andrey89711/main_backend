@@ -55,6 +55,13 @@ def register(
             detail="Email already exists"
         )
 
+    if not user.personal_data_consent:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Personal data processing consent is required"
+        )
+
     role = db.query(Role).filter(
         Role.code == user.role
     ).first()

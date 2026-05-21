@@ -1,4 +1,8 @@
-"""Настройки механизма связанных обращений."""
+"""Настройки механизма связанных обращений.
+
+Похожие заявки сравниваются только при совпадении category_id
+(см. find_similar_tickets в linked_tickets.py).
+"""
 
 INACTIVE_STATUSES = frozenset({
     "completed",

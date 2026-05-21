@@ -39,6 +39,12 @@ from app.routes.notifications import (
     router as notifications_router
 )
 
+from app.routes.categories import (
+    router as categories_router
+)
+
+from app.config.categories import DEFAULT_CATEGORIES
+
 
 Base.metadata.create_all(bind=engine)
 
@@ -169,6 +175,34 @@ def seed_roles():
 seed_roles()
 
 
+def seed_categories():
+
+    db = SessionLocal()
+
+    try:
+
+        for name in DEFAULT_CATEGORIES:
+
+            exists = db.query(Category).filter(
+                Category.name == name
+            ).first()
+
+            if not exists:
+
+                db.add(
+                    Category(name=name)
+                )
+
+        db.commit()
+
+    finally:
+
+        db.close()
+
+
+seed_categories()
+
+
 def migrate_legacy_user_addresses():
 
     db = SessionLocal()
@@ -231,6 +265,8 @@ app.include_router(
 app.include_router(users_router)
 
 app.include_router(notifications_router)
+
+app.include_router(categories_router)
 
 
 @app.get("/")
