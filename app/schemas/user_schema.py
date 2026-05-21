@@ -42,6 +42,25 @@ class UserCreate(BaseModel):
         return value
 
 
+class StaffUserCreate(BaseModel):
+
+    full_name: str
+
+    email: EmailStr
+
+    phone: str = ""
+
+    password: str = Field(
+        min_length=5,
+        max_length=72
+    )
+
+    role: str = Field(
+        ...,
+        description="dispatcher | executor"
+    )
+
+
 class UserLogin(BaseModel):
 
     email: EmailStr

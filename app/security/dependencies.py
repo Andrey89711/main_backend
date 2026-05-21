@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from fastapi.security import OAuth2PasswordBearer
 
 from jose import jwt
+from jose import ExpiredSignatureError
 from jose import JWTError
 
 from sqlalchemy.orm import Session
@@ -38,7 +39,14 @@ def get_current_user(
 
     credentials_exception = HTTPException(
         status_code=401,
-        detail="Could not validate credentials"
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    expired_exception = HTTPException(
+        status_code=401,
+        detail="Token expired",
+        headers={"WWW-Authenticate": "Bearer"},
     )
 
     try:
@@ -53,6 +61,9 @@ def get_current_user(
 
         if subject is None:
             raise credentials_exception
+
+    except ExpiredSignatureError:
+        raise expired_exception
 
     except JWTError:
         raise credentials_exception
@@ -102,6 +113,28 @@ def require_admin(current_user):
         raise HTTPException(
             status_code=403,
             detail="Access denied"
+        )
+
+    return current_user
+
+
+ROLES_WITH_ADDRESSES = frozenset({
+    "resident",
+})
+
+STAFF_ROLES = frozenset({
+    "dispatcher",
+    "executor",
+})
+
+
+def require_resident_addresses(current_user):
+
+    if current_user.role not in ROLES_WITH_ADDRESSES:
+
+        raise HTTPException(
+            status_code=403,
+            detail="Addresses are not available for this role"
         )
 
     return current_user

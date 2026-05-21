@@ -7,7 +7,9 @@
 INACTIVE_STATUSES = frozenset({
     "completed",
     "closed",
+    "auto_closed",
     "archived",
+    "dispute_review",
 })
 
 # Порог 0.35 отсекал типичные пары вроде «не работает лифт» / «сломан лифт» (~0.31).
@@ -27,7 +29,9 @@ PRIORITY_RULES = [
 STATUS_LABELS = {
     "new": "Новая",
     "in_progress": "В работе",
-    "completed": "Завершена",
+    "completed": "Выполнена",
     "closed": "Закрыта",
+    "auto_closed": "Закрыта автоматически",
+    "dispute_review": "На повторной проверке",
     "archived": "Архивирована",
 }

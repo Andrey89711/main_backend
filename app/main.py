@@ -18,6 +18,8 @@ from app.models.user_address import UserAddress
 from app.models.ticket_link import TicketLink
 from app.models.notification import Notification
 from app.models.ticket_action_log import TicketActionLog
+from app.models.ticket_feedback import TicketFeedback
+from app.models.ticket_feedback import TicketFeedbackAttachment
 
 from app.routes.users import router as users_router
 
@@ -31,9 +33,15 @@ from app.models.ticket_status_history import (
 
 from app.routes.auth import router as auth_router
 
+from app.routes.feedback import (
+    router as feedback_router
+)
+
 from app.routes.tickets import (
     router as tickets_router
 )
+
+from app.services.feedback_service import auto_close_stale_tickets
 
 from app.routes.notifications import (
     router as notifications_router
@@ -44,6 +52,9 @@ from app.routes.categories import (
 )
 
 from app.config.categories import DEFAULT_CATEGORIES
+
+from app.services.user_roles import clear_user_addresses
+from app.security.dependencies import STAFF_ROLES
 
 
 Base.metadata.create_all(bind=engine)
@@ -86,6 +97,17 @@ def ensure_schema_updates():
                     text(
                         "ALTER TABLE tickets "
                         "ADD COLUMN merged_into_id INTEGER NULL"
+                    )
+                )
+
+        if "completed_at" not in ticket_columns:
+
+            with engine.begin() as connection:
+
+                connection.execute(
+                    text(
+                        "ALTER TABLE tickets "
+                        "ADD COLUMN completed_at DATETIME NULL"
                     )
                 )
 
@@ -203,6 +225,29 @@ def seed_categories():
 seed_categories()
 
 
+def cleanup_staff_addresses():
+
+    db = SessionLocal()
+
+    try:
+
+        staff_users = db.query(User).filter(
+            User.role.in_(STAFF_ROLES)
+        ).all()
+
+        for user in staff_users:
+            clear_user_addresses(db, user.id)
+
+        db.commit()
+
+    finally:
+
+        db.close()
+
+
+cleanup_staff_addresses()
+
+
 def migrate_legacy_user_addresses():
 
     db = SessionLocal()
@@ -256,7 +301,25 @@ app.add_middleware(
 
 app.include_router(auth_router)
 
+app.include_router(feedback_router)
+
 app.include_router(tickets_router)
+
+
+def run_feedback_auto_close():
+
+    db = SessionLocal()
+
+    try:
+
+        auto_close_stale_tickets(db)
+
+    finally:
+
+        db.close()
+
+
+run_feedback_auto_close()
 
 app.include_router(
     addresses_router

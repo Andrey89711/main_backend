@@ -47,6 +47,8 @@ class Ticket(Base):
         nullable=True
     )
 
+    completed_at = Column(DateTime, nullable=True)
+
     address = relationship(
         "Address",
         back_populates="tickets"
@@ -58,6 +60,12 @@ class Ticket(Base):
 
     links = relationship(
         "TicketLink",
+        back_populates="ticket",
+        cascade="all, delete-orphan"
+    )
+
+    feedback_entries = relationship(
+        "TicketFeedback",
         back_populates="ticket",
         cascade="all, delete-orphan"
     )

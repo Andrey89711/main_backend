@@ -38,6 +38,7 @@ from app.security.dependencies import (
 )
 
 from app.services import linked_tickets as linked_service
+from app.services import feedback_service
 
 
 router = APIRouter(
@@ -789,6 +790,10 @@ def change_ticket_status(
     old_status = ticket.status
 
     ticket.status = new_status
+
+    if new_status == "completed" and old_status != "completed":
+
+        feedback_service.on_ticket_completed(db, ticket)
 
     linked_service.notify_status_change(
         db,

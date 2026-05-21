@@ -13,7 +13,9 @@ from app.models.user_address import UserAddress
 
 from app.security.dependencies import (
     get_current_user,
-    require_address_reviewer
+    require_address_reviewer,
+    require_resident_addresses,
+    STAFF_ROLES,
 )
 
 
@@ -83,6 +85,8 @@ def get_my_addresses(
     current_user: User = Depends(get_current_user)
 ):
 
+    require_resident_addresses(current_user)
+
     links = db.query(UserAddress).filter(
         UserAddress.user_id == current_user.id
     ).order_by(
@@ -101,6 +105,8 @@ def get_my_verified_addresses(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+
+    require_resident_addresses(current_user)
 
     links = db.query(UserAddress).filter(
         UserAddress.user_id == current_user.id,
@@ -122,6 +128,8 @@ def add_my_address(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+
+    require_resident_addresses(current_user)
 
     required_fields = [
         "street",
@@ -175,6 +183,8 @@ def update_my_address(
     current_user: User = Depends(get_current_user)
 ):
 
+    require_resident_addresses(current_user)
+
     link = get_user_address_link(
         db,
         link_id,
@@ -199,6 +209,8 @@ def set_primary_address(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+
+    require_resident_addresses(current_user)
 
     link = get_user_address_link(
         db,
@@ -226,6 +238,8 @@ def delete_my_address(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+
+    require_resident_addresses(current_user)
 
     link = get_user_address_link(
         db,
@@ -262,8 +276,12 @@ def get_pending_addresses(
 
     require_address_reviewer(current_user)
 
-    links = db.query(UserAddress).filter(
-        UserAddress.is_verified == False
+    links = db.query(UserAddress).join(
+        User,
+        UserAddress.user_id == User.id
+    ).filter(
+        UserAddress.is_verified == False,
+        ~User.role.in_(STAFF_ROLES | {"admin"})
     ).order_by(
         UserAddress.created_at.desc()
     ).all()

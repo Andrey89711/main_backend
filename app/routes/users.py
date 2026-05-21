@@ -10,13 +10,21 @@ from app.models.user import User
 from app.models.role import Role
 from app.models.user_address import UserAddress
 
+from app.schemas.user_schema import StaffUserCreate
+
 from app.security.dependencies import (
     get_current_user,
-    require_admin
+    require_admin,
+    STAFF_ROLES,
 )
 
 from app.security.hashing import (
     hash_password
+)
+
+from app.services.user_roles import (
+    clear_user_addresses,
+    is_staff_role,
 )
 
 
@@ -49,10 +57,97 @@ def get_users(
             "role": user.role,
             "role_name": user.role_info.name if user.role_info else user.role,
             "is_active": user.is_active,
-            "is_current": user.id == current_user.id
+            "is_current": user.id == current_user.id,
+            "is_staff": user.role in STAFF_ROLES
         }
         for user in users
     ]
+
+
+@router.get("/staff")
+def get_staff_users(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    require_admin(current_user)
+
+    users = db.query(User).filter(
+        User.role.in_(STAFF_ROLES)
+    ).order_by(
+        User.role,
+        User.full_name
+    ).all()
+
+    return [
+        {
+            "id": user.id,
+            "full_name": user.full_name,
+            "email": user.email,
+            "phone": user.phone,
+            "role": user.role,
+            "role_name": user.role_info.name if user.role_info else user.role,
+            "is_active": user.is_active
+        }
+        for user in users
+    ]
+
+
+@router.post("/staff")
+def create_staff_user(
+    data: StaffUserCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    require_admin(current_user)
+
+    if data.role not in STAFF_ROLES:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Role must be dispatcher or executor"
+        )
+
+    existing_user = db.query(User).filter(
+        User.email == data.email
+    ).first()
+
+    if existing_user:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Email already exists"
+        )
+
+    role = db.query(Role).filter(
+        Role.code == data.role
+    ).first()
+
+    if not role:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid role"
+        )
+
+    new_user = User(
+        full_name=data.full_name,
+        email=data.email,
+        phone=data.phone,
+        password_hash=hash_password(data.password[:72]),
+        role=data.role
+    )
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return {
+        "message": "Staff user created",
+        "id": new_user.id,
+        "role": new_user.role
+    }
 
 
 @router.get("/roles")
@@ -110,6 +205,20 @@ def update_user_role(
             detail="Invalid role"
         )
 
+    if role_code in STAFF_ROLES:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Use staff tab to create dispatcher or executor"
+        )
+
+    if role_code != "resident":
+
+        raise HTTPException(
+            status_code=400,
+            detail="Only resident role can be assigned here"
+        )
+
     user = db.query(User).filter(
         User.id == user_id
     ).first()
@@ -120,6 +229,16 @@ def update_user_role(
             status_code=404,
             detail="User not found"
         )
+
+    if user.role == "admin":
+
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot change admin role"
+        )
+
+    if is_staff_role(user.role):
+        clear_user_addresses(db, user.id)
 
     user.role = role.code
 
@@ -156,6 +275,8 @@ def get_profile(
             current_user.email,
         "phone":
             current_user.phone,
+        "role": current_user.role,
+        "has_addresses": current_user.role == "resident",
         "street":
             address.street if address else "",
         "house":
