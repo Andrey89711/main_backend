@@ -8,6 +8,7 @@ from app.db.database import SessionLocal
 
 from app.models.ticket import Ticket
 from app.models.comment import Comment
+from app.models.category import Category
 
 from app.schemas.ticket_schema import (
     TicketCreate,
@@ -42,6 +43,38 @@ def get_db():
         db.close()
 
 
+def get_or_create_default_category(
+    db: Session,
+    category_id: int
+):
+
+    category = db.query(Category).filter(
+        Category.id == category_id
+    ).first()
+
+    if category:
+
+        return category
+
+    category = db.query(Category).filter(
+        Category.name == "Общие заявки"
+    ).first()
+
+    if category:
+
+        return category
+
+    category = Category(
+        name="Общие заявки"
+    )
+
+    db.add(category)
+
+    db.flush()
+
+    return category
+
+
 @router.post(
     "/",
     response_model=TicketResponse
@@ -52,9 +85,14 @@ def create_ticket(
     current_user=Depends(get_current_user)
 ):
 
+    category = get_or_create_default_category(
+        db,
+        ticket.category_id
+    )
+
     new_ticket = Ticket(
         description=ticket.description,
-        category_id=ticket.category_id,
+        category_id=category.id,
         address_id=current_user.address_id,
         resident_id=current_user.id,
         status="new",
