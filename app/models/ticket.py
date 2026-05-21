@@ -41,6 +41,12 @@ class Ticket(Base):
         ForeignKey("addresses.id")
     )
 
+    merged_into_id = Column(
+        Integer,
+        ForeignKey("tickets.id"),
+        nullable=True
+    )
+
     address = relationship(
         "Address",
         back_populates="tickets"
@@ -49,3 +55,9 @@ class Ticket(Base):
     resident = relationship("User")
 
     category = relationship("Category")
+
+    links = relationship(
+        "TicketLink",
+        back_populates="ticket",
+        cascade="all, delete-orphan"
+    )

@@ -15,6 +15,9 @@ from app.models.address import Address
 from app.models.ticket import Ticket
 from app.models.comment import Comment
 from app.models.user_address import UserAddress
+from app.models.ticket_link import TicketLink
+from app.models.notification import Notification
+from app.models.ticket_action_log import TicketActionLog
 
 from app.routes.users import router as users_router
 
@@ -30,6 +33,10 @@ from app.routes.auth import router as auth_router
 
 from app.routes.tickets import (
     router as tickets_router
+)
+
+from app.routes.notifications import (
+    router as notifications_router
 )
 
 
@@ -58,8 +65,61 @@ def ensure_schema_updates():
                     )
                 )
 
+    if inspector.has_table("tickets"):
+
+        ticket_columns = {
+            column["name"]
+            for column in inspector.get_columns("tickets")
+        }
+
+        if "merged_into_id" not in ticket_columns:
+
+            with engine.begin() as connection:
+
+                connection.execute(
+                    text(
+                        "ALTER TABLE tickets "
+                        "ADD COLUMN merged_into_id INTEGER NULL"
+                    )
+                )
+
 
 ensure_schema_updates()
+
+
+def backfill_ticket_creator_links():
+
+    db = SessionLocal()
+
+    try:
+
+        tickets = db.query(Ticket).all()
+
+        for ticket in tickets:
+
+            exists = db.query(TicketLink).filter(
+                TicketLink.ticket_id == ticket.id,
+                TicketLink.user_id == ticket.resident_id
+            ).first()
+
+            if not exists:
+
+                db.add(
+                    TicketLink(
+                        ticket_id=ticket.id,
+                        user_id=ticket.resident_id,
+                        is_creator=True
+                    )
+                )
+
+        db.commit()
+
+    finally:
+
+        db.close()
+
+
+backfill_ticket_creator_links()
 
 
 def seed_roles():
@@ -169,6 +229,8 @@ app.include_router(
 )
 
 app.include_router(users_router)
+
+app.include_router(notifications_router)
 
 
 @app.get("/")

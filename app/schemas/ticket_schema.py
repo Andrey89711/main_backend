@@ -1,4 +1,17 @@
+from datetime import datetime
+
 from pydantic import BaseModel
+
+
+class CategoryBrief(BaseModel):
+
+    id: int
+
+    name: str
+
+    class Config:
+
+        from_attributes = True
 
 
 class AddressResponse(BaseModel):
@@ -39,7 +52,19 @@ class TicketResponse(BaseModel):
 
     resident_id: int
 
+    category_id: int | None = None
+
+    created_at: datetime | None = None
+
+    subscribers_count: int = 0
+
+    is_creator: bool = False
+
+    is_linked: bool = False
+
     address: AddressResponse | None = None
+
+    category: CategoryBrief | None = None
 
     class Config:
 
