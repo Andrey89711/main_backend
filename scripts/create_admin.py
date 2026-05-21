@@ -1,6 +1,9 @@
 """Создание ролей и учётной записи администратора."""
 
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.db.database import SessionLocal
 from app.models import Address  # noqa: F401 — регистрация моделей
