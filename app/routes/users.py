@@ -165,37 +165,60 @@ def update_profile(
     )
 ):
 
-    current_user.full_name = (
+    user = db.query(User).filter(
+        User.id == current_user.id
+    ).first()
+
+    if not user:
+
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    existing_user = db.query(User).filter(
+        User.email == data["email"],
+        User.id != user.id
+    ).first()
+
+    if existing_user:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Email already exists"
+        )
+
+    user.full_name = (
         data["full_name"]
     )
 
-    current_user.email = (
+    user.email = (
         data["email"]
     )
 
-    current_user.phone = (
+    user.phone = (
         data["phone"]
     )
 
-    if current_user.address is None:
+    if user.address is None:
 
-        current_user.address = Address()
+        user.address = Address()
 
-    current_user.address.street = (
+    user.address.street = (
         data["street"]
     )
 
-    current_user.address.house = (
+    user.address.house = (
         data["house"]
     )
 
-    current_user.address.apartment = (
+    user.address.apartment = (
         data["apartment"]
     )
 
     if data.get("password"):
 
-        current_user.password_hash = (
+        user.password_hash = (
             hash_password(
                 data["password"]
             )

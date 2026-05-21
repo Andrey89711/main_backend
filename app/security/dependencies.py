@@ -49,17 +49,29 @@ def get_current_user(
             algorithms=[ALGORITHM]
         )
 
-        email = payload.get("sub")
+        subject = payload.get("sub")
 
-        if email is None:
+        if subject is None:
             raise credentials_exception
 
     except JWTError:
         raise credentials_exception
 
-    user = db.query(User).filter(
-        User.email == email
-    ).first()
+    user = None
+
+    try:
+
+        user_id = int(subject)
+
+        user = db.query(User).filter(
+            User.id == user_id
+        ).first()
+
+    except ValueError:
+
+        user = db.query(User).filter(
+            User.email == subject
+        ).first()
 
     if user is None:
         raise credentials_exception

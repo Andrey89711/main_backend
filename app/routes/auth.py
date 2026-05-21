@@ -130,7 +130,8 @@ def login(
 
     access_token = create_access_token(
         data={
-            "sub": db_user.email,
+            "sub": str(db_user.id),
+            "email": db_user.email,
             "role": db_user.role
         }
     )
