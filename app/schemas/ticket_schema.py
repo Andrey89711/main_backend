@@ -1,7 +1,5 @@
 from pydantic import BaseModel
 
-from pydantic import BaseModel
-
 
 class AddressResponse(BaseModel):
 
@@ -13,6 +11,8 @@ class AddressResponse(BaseModel):
 
     apartment: str
 
+    personal_account: str | None = None
+
     class Config:
 
         from_attributes = True
@@ -23,6 +23,8 @@ class TicketCreate(BaseModel):
     description: str
 
     category_id: int
+
+    address_id: int
 
 
 class TicketResponse(BaseModel):

@@ -41,4 +41,9 @@ class User(Base):
         "Role"
     )
 
+    address_links = relationship(
+        "UserAddress",
+        back_populates="user"
+    )
+
     is_active = Column(Boolean, default=True)

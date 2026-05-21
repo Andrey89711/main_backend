@@ -5,6 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.db.database import engine
 from app.db.database import Base
 from app.db.database import SessionLocal
+from sqlalchemy import inspect
+from sqlalchemy import text
 
 from app.models.role import Role
 from app.models.user import User
@@ -12,6 +14,7 @@ from app.models.category import Category
 from app.models.address import Address
 from app.models.ticket import Ticket
 from app.models.comment import Comment
+from app.models.user_address import UserAddress
 
 from app.routes.users import router as users_router
 
@@ -31,6 +34,32 @@ from app.routes.tickets import (
 
 
 Base.metadata.create_all(bind=engine)
+
+
+def ensure_schema_updates():
+
+    inspector = inspect(engine)
+
+    if inspector.has_table("addresses"):
+
+        columns = {
+            column["name"]
+            for column in inspector.get_columns("addresses")
+        }
+
+        if "personal_account" not in columns:
+
+            with engine.begin() as connection:
+
+                connection.execute(
+                    text(
+                        "ALTER TABLE addresses "
+                        "ADD COLUMN personal_account VARCHAR(100)"
+                    )
+                )
+
+
+ensure_schema_updates()
 
 
 def seed_roles():
@@ -78,6 +107,44 @@ def seed_roles():
 
 
 seed_roles()
+
+
+def migrate_legacy_user_addresses():
+
+    db = SessionLocal()
+
+    try:
+
+        users = db.query(User).filter(
+            User.address_id.isnot(None)
+        ).all()
+
+        for user in users:
+
+            exists = db.query(UserAddress).filter(
+                UserAddress.user_id == user.id,
+                UserAddress.address_id == user.address_id
+            ).first()
+
+            if not exists:
+
+                db.add(
+                    UserAddress(
+                        user_id=user.id,
+                        address_id=user.address_id,
+                        is_primary=True,
+                        is_verified=True
+                    )
+                )
+
+        db.commit()
+
+    finally:
+
+        db.close()
+
+
+migrate_legacy_user_addresses()
 
 app = FastAPI(
     title="TSZH System"

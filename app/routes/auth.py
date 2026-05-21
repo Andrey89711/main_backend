@@ -11,6 +11,7 @@ from app.db.database import SessionLocal
 from app.models.user import User
 from app.models.address import Address
 from app.models.role import Role
+from app.models.user_address import UserAddress
 
 from app.schemas.user_schema import UserCreate
 
@@ -72,7 +73,8 @@ def register(
     address = Address(
         street=user.street,
         house=user.house,
-        apartment=user.apartment
+        apartment=user.apartment,
+        personal_account=user.personal_account
     )
 
     db.add(address)
@@ -83,12 +85,22 @@ def register(
         full_name=user.full_name,
         email=user.email,
         phone=user.phone,
-        address_id=address.id,
         password_hash=hashed_password,
         role=user.role
     )
 
     db.add(new_user)
+
+    db.flush()
+
+    user_address = UserAddress(
+        user_id=new_user.id,
+        address_id=address.id,
+        is_primary=True,
+        is_verified=False
+    )
+
+    db.add(user_address)
 
     db.commit()
 

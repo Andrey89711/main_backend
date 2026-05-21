@@ -9,6 +9,7 @@ from app.db.database import SessionLocal
 from app.models.ticket import Ticket
 from app.models.comment import Comment
 from app.models.category import Category
+from app.models.user_address import UserAddress
 
 from app.schemas.ticket_schema import (
     TicketCreate,
@@ -100,10 +101,23 @@ def create_ticket(
         ticket.category_id
     )
 
+    address_link = db.query(UserAddress).filter(
+        UserAddress.user_id == current_user.id,
+        UserAddress.address_id == ticket.address_id,
+        UserAddress.is_verified == True
+    ).first()
+
+    if not address_link:
+
+        raise HTTPException(
+            status_code=403,
+            detail="Address is not verified or not linked to current user"
+        )
+
     new_ticket = Ticket(
         description=ticket.description,
         category_id=category.id,
-        address_id=current_user.address_id,
+        address_id=ticket.address_id,
         resident_id=current_user.id,
         status="new",
         priority="medium"

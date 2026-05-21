@@ -22,6 +22,8 @@ class UserCreate(BaseModel):
 
     apartment: str
 
+    personal_account: str
+
     role: str = "resident"
 
 

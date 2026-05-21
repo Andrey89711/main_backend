@@ -7,8 +7,8 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 
 from app.models.user import User
-from app.models.address import Address
 from app.models.role import Role
+from app.models.user_address import UserAddress
 
 from app.security.dependencies import (
     get_current_user,
@@ -137,7 +137,16 @@ def get_profile(
     )
 ):
 
-    address = current_user.address
+    primary_link = next(
+        (
+            link
+            for link in current_user.address_links
+            if link.is_primary
+        ),
+        None
+    )
+
+    address = primary_link.address if primary_link else None
 
     return {
         "id": current_user.id,
@@ -198,22 +207,6 @@ def update_profile(
 
     user.phone = (
         data["phone"]
-    )
-
-    if user.address is None:
-
-        user.address = Address()
-
-    user.address.street = (
-        data["street"]
-    )
-
-    user.address.house = (
-        data["house"]
-    )
-
-    user.address.apartment = (
-        data["apartment"]
     )
 
     if data.get("password"):

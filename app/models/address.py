@@ -19,9 +19,16 @@ class Address(Base):
 
     apartment = Column(String(50))
 
+    personal_account = Column(String(100))
+
     tickets = relationship(
         "Ticket",
         back_populates="address"
     )
 
     users = relationship("User")
+
+    user_links = relationship(
+        "UserAddress",
+        back_populates="address"
+    )

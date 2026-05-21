@@ -105,3 +105,18 @@ def require_admin(current_user):
         )
 
     return current_user
+
+
+def require_address_reviewer(current_user):
+
+    if current_user.role not in [
+        "admin",
+        "dispatcher"
+    ]:
+
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied"
+        )
+
+    return current_user
