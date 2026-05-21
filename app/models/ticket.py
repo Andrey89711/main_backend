@@ -20,9 +20,9 @@ class Ticket(Base):
 
     description = Column(Text, nullable=False)
 
-    status = Column(String, default="new")
+    status = Column(String(50), default="new")
 
-    priority = Column(String, default="medium")
+    priority = Column(String(50), default="medium")
 
     created_at = Column(DateTime, default=datetime.utcnow)
 

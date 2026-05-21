@@ -20,7 +20,7 @@ class Comment(Base):
     )
 
     text = Column(
-        String,
+        String(1000),
         nullable=False
     )
 

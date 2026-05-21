@@ -13,11 +13,11 @@ class Address(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    street = Column(String)
+    street = Column(String(255))
 
-    house = Column(String)
+    house = Column(String(50))
 
-    apartment = Column(String)
+    apartment = Column(String(50))
 
     tickets = relationship(
         "Ticket",

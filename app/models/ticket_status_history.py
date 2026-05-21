@@ -20,9 +20,9 @@ class TicketStatusHistory(Base):
         ForeignKey("tickets.id")
     )
 
-    old_status = Column(String)
+    old_status = Column(String(50))
 
-    new_status = Column(String)
+    new_status = Column(String(50))
 
     changed_by = Column(
         Integer,
