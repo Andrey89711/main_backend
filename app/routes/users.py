@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 
 from app.models.user import User
+from app.models.address import Address
 
 from app.security.dependencies import (
     get_current_user
@@ -29,6 +30,8 @@ def get_profile(
     )
 ):
 
+    address = current_user.address
+
     return {
         "id": current_user.id,
         "full_name":
@@ -38,11 +41,11 @@ def get_profile(
         "phone":
             current_user.phone,
         "street":
-            current_user.address.street,
+            address.street if address else "",
         "house":
-            current_user.address.house,
+            address.house if address else "",
         "apartment":
-            current_user.address.apartment
+            address.apartment if address else ""
     }
 
 
@@ -66,6 +69,10 @@ def update_profile(
     current_user.phone = (
         data["phone"]
     )
+
+    if current_user.address is None:
+
+        current_user.address = Address()
 
     current_user.address.street = (
         data["street"]

@@ -12,11 +12,17 @@ class UserCreate(BaseModel):
     phone: str
 
     password: str = Field(
-        min_length=6,
+        min_length=5,
         max_length=72
     )
 
-    role: str
+    street: str
+
+    house: str
+
+    apartment: str
+
+    role: str = "resident"
 
 
 class UserLogin(BaseModel):
@@ -24,6 +30,6 @@ class UserLogin(BaseModel):
     email: EmailStr
 
     password: str = Field(
-        min_length=6,
+        min_length=5,
         max_length=72
     )

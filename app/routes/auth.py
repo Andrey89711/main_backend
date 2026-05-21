@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.db.database import SessionLocal
 
 from app.models.user import User
+from app.models.address import Address
 
 from app.schemas.user_schema import UserCreate
 
@@ -56,10 +57,21 @@ def register(
         user.password[:72]
     )
 
+    address = Address(
+        street=user.street,
+        house=user.house,
+        apartment=user.apartment
+    )
+
+    db.add(address)
+
+    db.flush()
+
     new_user = User(
         full_name=user.full_name,
         email=user.email,
         phone=user.phone,
+        address_id=address.id,
         password_hash=hashed_password,
         role=user.role
     )
