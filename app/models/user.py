@@ -31,6 +31,14 @@ class User(Base):
 
     password_hash = Column(String(255), nullable=False)
 
-    role = Column(String(50), nullable=False)
+    role = Column(
+        String(50),
+        ForeignKey("roles.code"),
+        nullable=False
+    )
+
+    role_info = relationship(
+        "Role"
+    )
 
     is_active = Column(Boolean, default=True)

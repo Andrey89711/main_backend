@@ -4,7 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.db.database import engine
 from app.db.database import Base
+from app.db.database import SessionLocal
 
+from app.models.role import Role
 from app.models.user import User
 from app.models.category import Category
 from app.models.address import Address
@@ -29,6 +31,53 @@ from app.routes.tickets import (
 
 
 Base.metadata.create_all(bind=engine)
+
+
+def seed_roles():
+
+    roles = [
+        {
+            "code": "resident",
+            "name": "Жилец"
+        },
+        {
+            "code": "dispatcher",
+            "name": "Диспетчер"
+        },
+        {
+            "code": "admin",
+            "name": "Администратор"
+        },
+        {
+            "code": "executor",
+            "name": "Исполнитель"
+        }
+    ]
+
+    db = SessionLocal()
+
+    try:
+
+        for role in roles:
+
+            exists = db.query(Role).filter(
+                Role.code == role["code"]
+            ).first()
+
+            if not exists:
+
+                db.add(
+                    Role(**role)
+                )
+
+        db.commit()
+
+    finally:
+
+        db.close()
+
+
+seed_roles()
 
 app = FastAPI(
     title="TSZH System"

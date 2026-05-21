@@ -10,6 +10,7 @@ from app.db.database import SessionLocal
 
 from app.models.user import User
 from app.models.address import Address
+from app.models.role import Role
 
 from app.schemas.user_schema import UserCreate
 
@@ -51,6 +52,17 @@ def register(
         raise HTTPException(
             status_code=400,
             detail="Email already exists"
+        )
+
+    role = db.query(Role).filter(
+        Role.code == user.role
+    ).first()
+
+    if not role:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid role"
         )
 
     hashed_password = hash_password(

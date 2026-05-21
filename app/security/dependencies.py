@@ -66,12 +66,9 @@ def get_current_user(
 
     return user
 
-def require_dispatcher_or_admin(current_user):
+def require_dispatcher(current_user):
 
-    if current_user.role not in [
-        "dispatcher",
-        "admin"
-    ]:
+    if current_user.role != "dispatcher":
 
         raise HTTPException(
             status_code=403,
@@ -79,3 +76,8 @@ def require_dispatcher_or_admin(current_user):
         )
 
     return current_user
+
+
+def require_dispatcher_or_admin(current_user):
+
+    return require_dispatcher(current_user)

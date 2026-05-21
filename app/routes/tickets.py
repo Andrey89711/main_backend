@@ -22,7 +22,7 @@ from app.schemas.comment_schema import (
 
 from app.security.dependencies import (
     get_current_user,
-    require_dispatcher_or_admin
+    require_dispatcher
 )
 
 
@@ -133,7 +133,7 @@ def get_all_tickets(
     current_user=Depends(get_current_user)
 ):
 
-    require_dispatcher_or_admin(
+    require_dispatcher(
         current_user
     )
 
@@ -152,7 +152,7 @@ def change_ticket_status(
     current_user=Depends(get_current_user)
 ):
 
-    require_dispatcher_or_admin(
+    require_dispatcher(
         current_user
     )
 
